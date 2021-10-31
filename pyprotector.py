@@ -5,6 +5,10 @@ from typing import Any, Callable, Optional, Union
 ProgramState = dict[str, Any]
 
 
+class TimeUpError(Exception):
+    """Exception raised when time is up and program can't be run."""
+
+
 @dataclass
 class CypherPathes:
     encrypted_code: str
@@ -19,10 +23,25 @@ class _Program:
         *,
         until_date: Optional[datetime] = None
     ) -> None:
-        ...
+        self._program_state = program_state
+        self._starter = starter
+        self._until_date = until_date
 
-    def start() -> Optional[NoReturn]:
-        ...
+    def start(self) -> Any:
+        """Starts saved starter function with program state.
+
+        Raises:
+            TimeUpError: If the program can't be run
+                because specified in initialization date has come.
+
+        Returns:
+            The returned value of starter function.
+        """
+
+        if self._until_date is not None and self._until_date < datetime.now():
+            raise TimeUpError()
+
+        return self._starter(self._program_state)
 
 
 def protect(
