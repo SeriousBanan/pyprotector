@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Callable, NoReturn, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 ProgramState = dict[str, Any]
 
@@ -15,7 +15,7 @@ class _Program:
     def __init__(
         self,
         program_state: ProgramState,
-        starter: Callable[[ProgramState], Optional[NoReturn]],
+        starter: Callable[[ProgramState], Any],
         *,
         until_date: Optional[datetime] = None
     ) -> None:
@@ -27,7 +27,7 @@ class _Program:
 
 def protect(
     initializer: Callable[[], ProgramState],
-    starter: Callable[[ProgramState], Optional[NoReturn]],
+    starter: Callable[[ProgramState], Any],
     passphrase: str,
     dst: str,
     *,
@@ -36,5 +36,5 @@ def protect(
     ...
 
 
-def start(passphrase: str, cypher_pathes: CypherPathes) -> Optional[NoReturn]:
+def start(passphrase: str, cypher_pathes: CypherPathes) -> Any:
     ...
