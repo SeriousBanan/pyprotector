@@ -11,6 +11,13 @@ class TimeUpError(Exception):
 
 @dataclass
 class CypherPathes:
+    """Dataclass with pathes to cypher objects.
+
+    Contains next attributes:
+        - encrypted_code: Path to binary file with encrypted code.
+        - rsa_key: Path to file with private RSA key.
+    """
+
     encrypted_code: str
     rsa_key: str
 
