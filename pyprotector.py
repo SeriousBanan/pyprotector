@@ -22,9 +22,8 @@ class TimeUpError(Exception):
 
 
 @dataclass
-# todo: fix `cypher` to `cipher`
-class CypherPathes:
-    """Dataclass with pathes to cypher objects.
+class CipherPathes:
+    """Dataclass with pathes to cipher objects.
 
     Contains next attributes:
         - encrypted_code: Path to binary file with encrypted code.
@@ -77,7 +76,7 @@ def protect(
     dst: str,
     *,
     until_date: Optional[Union[datetime, timedelta]] = None,
-) -> CypherPathes:
+) -> CipherPathes:
     """Protect program by saving encrypted serealized code into binary file.
 
     Serialize code by value using cloudpickle module for having the ability to deserialize code
@@ -99,7 +98,7 @@ def protect(
         NotADirectoryError: If path in `dst` argument not valid.
 
     Returns:
-        CypherPathes instance.
+        CipherPathes instance.
     """
 
     if not path.isdir(dst):
@@ -113,27 +112,27 @@ def protect(
 
     encrypted_data = _encrypt_code(code=pickled, passphrase=passphrase)
 
-    cypher_pathes = CypherPathes(
+    cipher_pathes = CipherPathes(
         encrypted_code=path.join(dst, "encrypted_code.bin"), rsa_key=path.join(dst, "rsa_key.bin")
     )
 
-    with open(cypher_pathes.encrypted_code, "wb") as encrypted_code_file:
+    with open(cipher_pathes.encrypted_code, "wb") as encrypted_code_file:
         encrypted_code_file.write(encrypted_data.encrypted_data)
 
-    with open(cypher_pathes.rsa_key, "wb") as rsa_key_file:
+    with open(cipher_pathes.rsa_key, "wb") as rsa_key_file:
         rsa_key_file.write(encrypted_data.protected_private_rsa_key)
 
-    return cypher_pathes
+    return cipher_pathes
 
 
-def start(passphrase: str, cypher_pathes: CypherPathes) -> Any:
+def start(passphrase: str, cipher_pathes: CipherPathes) -> Any:
     """Starts protected program.
 
     Decrypt serialized code using AES and deserialize it by `pickle` module.
 
     Args:
         passphrase: Passphrase to read protected private RSA key from file.
-        cypher_pathes: CypherPathes instance.
+        cipher_pathes: CipherPathes instance.
 
     Returns:
         Returns program output.
@@ -141,10 +140,10 @@ def start(passphrase: str, cypher_pathes: CypherPathes) -> Any:
 
     encrypted_data = _EncryptedData(encrypted_data=b"", protected_private_rsa_key=b"")
 
-    with open(cypher_pathes.rsa_key, "rb") as rsa_key_file:
+    with open(cipher_pathes.rsa_key, "rb") as rsa_key_file:
         encrypted_data.protected_private_rsa_key = rsa_key_file.read()
 
-    with open(cypher_pathes.encrypted_code, "rb") as encrypted_code_file:
+    with open(cipher_pathes.encrypted_code, "rb") as encrypted_code_file:
         encrypted_data.encrypted_data = encrypted_code_file.read()
 
     pickled = _decrypt_code(encrypted_data=encrypted_data, passphrase=passphrase)
