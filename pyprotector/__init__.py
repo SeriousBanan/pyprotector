@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from io import BytesIO
 from os import path
-from types import ModuleType
+from types import FunctionType, ModuleType
 from typing import Any, Callable, Optional, Union
 
 import cloudpickle
@@ -187,7 +187,7 @@ def _dumps_object(obj: Any) -> bytes:
             if isinstance(module_obj, ModuleType):
                 sub_module = module_obj
 
-            elif isinstance(module_obj, type):
+            elif isinstance(module_obj, (type, FunctionType)):
                 sub_module = sys.modules[module_obj.__module__]
 
             else:
