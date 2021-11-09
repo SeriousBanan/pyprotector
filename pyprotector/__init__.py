@@ -176,9 +176,10 @@ def _dumps_object(obj: Any) -> bytes:
     # todo: #9 think how to dump objects from interpreter.
     main_module = sys.modules["__main__"]
     main_module_dir_path = path.dirname(main_module.__file__)
+    environment_path, *_ = sys.executable.split("bin/")
 
     modules_to_look = [main_module]
-    modules_for_registration = set()
+    modules_for_registration = {main_module}
 
     for module in modules_to_look:
         for module_obj in map(
@@ -199,6 +200,7 @@ def _dumps_object(obj: Any) -> bytes:
                 # check that module is file in project, not installed by package manager
                 and hasattr(sub_module, "__file__")
                 and sub_module.__file__.startswith(main_module_dir_path)
+                and not sub_module.__file__.startswith(environment_path)
                 # check that module wasn't already selected
                 and sub_module not in modules_for_registration
                 # check that module wasn't already registered
