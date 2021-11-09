@@ -14,6 +14,10 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 
+
+__all__ = ["ProgramState", "TimeUpError", "CipherPathes", "protect", "start"]
+
+
 ProgramState = dict[str, Any]
 
 
@@ -38,6 +42,9 @@ class CipherPathes:
 class _EncryptedData:
     encrypted_data: bytes
     protected_private_rsa_key: bytes
+
+
+del dataclass
 
 
 class _Program:
@@ -166,7 +173,7 @@ def _dumps_object(obj: Any) -> bytes:
         Bytes string with serealized object.
     """
 
-    # todo: think how to dump objects from interpreter.
+    # todo: #9 think how to dump objects from interpreter.
     main_module = sys.modules["__main__"]
     main_module_dir_path = path.dirname(main_module.__file__)
 
