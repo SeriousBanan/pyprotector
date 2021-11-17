@@ -177,13 +177,20 @@ def _dumps_object(obj: Any) -> bytes:
     Args:
         obj: Object to dumps.
 
+    Raises:
+        RuntimeError: If __main__ module is python interpreter.
+
     Returns:
         Bytes string with serealized object.
     """
 
     # todo: #9 think how to dump objects from interpreter.
     main_module = sys.modules["__main__"]
-    main_module_dir_path = path.dirname(main_module.__file__)
+    try:
+        main_module_dir_path = path.dirname(main_module.__file__)
+    except AttributeError as exp:
+        raise RuntimeError("protecting from interpreter not supported now") from exp
+
     environment_path, *_ = sys.executable.split("bin/")
 
     modules_to_look = [main_module]
