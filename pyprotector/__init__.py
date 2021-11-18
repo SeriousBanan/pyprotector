@@ -25,6 +25,14 @@ class TimeUpError(Exception):
     """Exception raised when time is up and program can't be run."""
 
 
+class RSAImportError(Exception):
+    """Exception raised when problems appears while importing RSA key."""
+
+
+class DecryptionError(Exception):
+    """Exception raised when problems with decryption of the code."""
+
+
 @dataclass
 class CipherPathes:
     """Dataclass with pathes to cipher objects.
@@ -71,7 +79,7 @@ class _Program:
         """
 
         if self._until_date is not None and self._until_date < datetime.now():
-            raise TimeUpError()
+            raise TimeUpError("the time at which the code can run expired")
 
         return self._starter(self._program_state)
 
@@ -169,13 +177,20 @@ def _dumps_object(obj: Any) -> bytes:
     Args:
         obj: Object to dumps.
 
+    Raises:
+        RuntimeError: If __main__ module is python interpreter.
+
     Returns:
         Bytes string with serealized object.
     """
 
     # todo: #9 think how to dump objects from interpreter.
     main_module = sys.modules["__main__"]
-    main_module_dir_path = path.dirname(main_module.__file__)
+    try:
+        main_module_dir_path = path.dirname(main_module.__file__)
+    except AttributeError as exp:
+        raise RuntimeError("protecting from interpreter not supported now") from exp
+
     environment_path, *_ = sys.executable.split("bin/")
 
     modules_to_look = [main_module]
@@ -280,11 +295,18 @@ def _decrypt_code(encrypted_data: _EncryptedData, passphrase: str) -> bytes:
         encrypted_data: _Encrypted_data instance.
         passphrase: Passphrase that would be using in importing of private RSA key.
 
+    Raises:
+        RSAImportError: If private RSA key cannot be imported.
+        DecryptionError: If decryption of the code failed.
+
     Returns:
         bytes: Decrypted bytes of code.
     """
 
-    rsa_key = RSA.import_key(encrypted_data.protected_private_rsa_key, passphrase=passphrase)
+    try:
+        rsa_key = RSA.import_key(encrypted_data.protected_private_rsa_key, passphrase=passphrase)
+    except ValueError as exp:
+        raise RSAImportError("incorrect passphrase or file with RSA key") from exp
 
     nonce_size_in_bytes = 16
     tag_size_in_bytes = 16
@@ -295,10 +317,13 @@ def _decrypt_code(encrypted_data: _EncryptedData, passphrase: str) -> bytes:
             for size in (rsa_key.size_in_bytes(), nonce_size_in_bytes, tag_size_in_bytes, -1)
         ]
 
-    cipher_rsa = PKCS1_OAEP.new(rsa_key)
-    session_key = cipher_rsa.decrypt(encrypted_session_key)
+    try:
+        cipher_rsa = PKCS1_OAEP.new(rsa_key)
+        session_key = cipher_rsa.decrypt(encrypted_session_key)
 
-    cipher_aes = AES.new(session_key, AES.MODE_EAX, nonce)
-    code = cipher_aes.decrypt_and_verify(encrypted_code, tag)  # type: ignore
+        cipher_aes = AES.new(session_key, AES.MODE_EAX, nonce)
+        code = cipher_aes.decrypt_and_verify(encrypted_code, tag)  # type: ignore
+    except ValueError as exp:
+        raise DecryptionError("code cannot be decrypted") from exp
 
     return code
