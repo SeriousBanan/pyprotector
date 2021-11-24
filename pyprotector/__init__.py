@@ -1,6 +1,7 @@
 """Module for protecting python code."""
 
 import pickle
+import platform
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -191,7 +192,10 @@ def _dumps_object(obj: Any) -> bytes:
     except AttributeError as exp:
         raise RuntimeError("protecting from interpreter not supported now") from exp
 
-    environment_path, *_ = sys.executable.split("bin/")
+    if platform.system() == "Windows":
+        environment_path, *_ = sys.executable.split("Scripts") if "Scripts" in sys.executable else path.dirname(sys.executable)
+    else:
+        environment_path, *_ = sys.executable.split("bin/")
 
     modules_to_look = [main_module]
     modules_for_registration = {main_module}
